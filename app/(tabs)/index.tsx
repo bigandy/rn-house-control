@@ -1,63 +1,104 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Pressable, Image, Text, StyleSheet, View } from "react-native";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import ParallaxScrollView from "@/components/ParallaxScrollView";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { useCallback, useEffect, useState } from "react";
+
+const houseControlNextUrl = "http://192.168.1.120:3000";
 
 export default function HomeScreen() {
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const response = await fetch(
+        houseControlNextUrl + "/api/music/sonos/getStatus"
+      );
+      const responseJson = await response.json();
+      const {
+        data: {
+          state: { state: playingState },
+        },
+      } = responseJson;
+
+      console.log({ playingState });
+      setIsPlaying(playingState !== "stopped");
+    };
+
+    fetchStatus();
+  }, []);
+
+  const handlePlayMusic = useCallback(async () => {
+    const response = await fetch(
+      houseControlNextUrl + "/api/music/sonos/toggleRoom",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          room: "Bedroom",
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    const newStatePlaying = data.data.state !== "stopped";
+
+    setIsPlaying(newStatePlaying);
+  }, []);
+
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+      // headerImage={null}
+    >
+      <View style={styles.buttonContainer}>
+        <Pressable
+          onPress={handlePlayMusic}
+          style={({ pressed }) => [
+            styles.button,
+            {
+              backgroundColor: pressed ? "rgb(210, 230, 255)" : "green",
+            },
+          ]}
+        >
+          <Text>{isPlaying ? "Stop Music" : "Play Music"}</Text>
+        </Pressable>
+        <Pressable
+          onPress={handlePlayMusic}
+          style={({ pressed }) => [
+            styles.button,
+            {
+              backgroundColor: pressed ? "rgb(210, 230, 255)" : "green",
+            },
+          ]}
+        >
+          <Text>{isPlaying ? "Stop Music" : "Play Music"}</Text>
+        </Pressable>
+      </View>
     </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  buttonContainer: {
+    flex: 1,
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  button: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "red",
+    padding: 8,
+  },
   titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   stepContainer: {
@@ -69,6 +110,6 @@ const styles = StyleSheet.create({
     width: 290,
     bottom: 0,
     left: 0,
-    position: 'absolute',
+    position: "absolute",
   },
 });
