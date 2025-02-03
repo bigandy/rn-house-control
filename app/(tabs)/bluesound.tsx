@@ -8,21 +8,25 @@ import PlayPauseIcon from "@/components/PlayPauseIcon";
 import { useCallback, useState } from "react";
 import { useEffect } from "react";
 import { fetchUrl } from "@/constants/Urls";
+import VolumeController from "@/components/VolumeController";
 
 export default function BluesoundPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [volume, setVolume] = useState(0);
 
   const getStatus = useCallback(async () => {
     const response = await fetch(fetchUrl("api/music/bluesound/getStatus"));
     const responseJson = await response.json();
 
     const {
-      data: { isPlaying },
+      data: { isPlaying, volume },
     } = responseJson;
 
-    console.log({ isPlaying });
+    // console.log({ isPlaying });
+
+    setVolume(volume);
 
     setIsPlaying(isPlaying);
   }, []);
@@ -61,6 +65,32 @@ export default function BluesoundPage() {
     setIsPlaying(status);
   }, []);
 
+  const handleVolumeChange = async (volume: number) => {
+    // const newVolume = Number(volume);
+    setVolume(volume);
+
+    try {
+      setError(null);
+      const response = await fetch(fetchUrl("api/music/bluesound/setVolume"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          volume,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to play music");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    }
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
@@ -77,10 +107,10 @@ export default function BluesoundPage() {
         <PlayPauseIcon isPlaying={isPlaying} />
       </Pressable>
 
-      {/* <VolumeController
+      <VolumeController
         volume={volume}
         handleVolumeChange={handleVolumeChange}
-      /> */}
+      />
 
       <BluesoundFavorites updateStatus={updateStatus} />
     </ParallaxScrollView>
