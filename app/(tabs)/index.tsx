@@ -1,9 +1,14 @@
-import { Pressable, Text, StyleSheet, View } from "react-native";
+import { Pressable, Text, StyleSheet, View, Platform } from "react-native";
+import {
+  VolumeManager,
+  type RingerSilentStatus,
+} from "react-native-volume-manager";
 
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { useCallback, useEffect, useState } from "react";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import PlayPauseIcon from "@/components/PlayPauseIcon";
+import VolumeController from "@/components/VolumeController";
 
 const houseControlNextUrl = "http://192.168.1.120:3000";
 
@@ -13,6 +18,13 @@ const nonActiveState = ["paused", "stopped"];
 export default function HomeScreen() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room>("Bedroom");
+  const [volume, setVolume] = useState(0);
+
+  const [currentSystemVolume, setReportedSystemVolume] = useState<number>(0);
+  const [isMuted, setIsMuted] = useState<boolean | undefined>();
+  const [initialQuery, setInitialQuery] = useState<boolean | undefined>();
+  const [ringerStatus, setRingerStatus] = useState<RingerSilentStatus>();
+  const [hideUI, setHideUI] = useState<boolean>(false);
 
   const getStatus = useCallback(async (room: Room) => {
     const response = await fetch(
@@ -21,11 +33,31 @@ export default function HomeScreen() {
     const responseJson = await response.json();
     const {
       data: {
-        state: { state: playingState },
+        state: { state: playingState, volume },
       },
     } = responseJson;
 
+    console.log({ volume });
+
+    setVolume(volume);
+
     setIsPlaying(!nonActiveState.includes(playingState));
+  }, []);
+
+  const handleVolumeChange = useCallback(async (newVolume: number) => {
+    await fetch(`${houseControlNextUrl}/api/music/sonos/setVolume`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        room: selectedRoom,
+        volume: newVolume,
+      }),
+    });
+
+    setVolume(newVolume);
+    // const rzesponseJson = await response.json();
   }, []);
 
   useEffect(() => {
@@ -35,6 +67,51 @@ export default function HomeScreen() {
 
     findStatus();
   }, [selectedRoom]);
+
+  useEffect(() => {
+    VolumeManager.showNativeVolumeUI({ enabled: false });
+  }, []);
+
+  useEffect(() => {
+    VolumeManager.getVolume().then((result) => {
+      setReportedSystemVolume(result.volume);
+      console.log("Read system volume", result);
+    });
+
+    const volumeListener = VolumeManager.addVolumeListener((result) => {
+      // volumeChangedByListener.current = true;
+
+      if (
+        (Platform.OS === "android" && result.type === "music") ||
+        Platform.OS === "ios"
+      ) {
+        setReportedSystemVolume(result.volume);
+        console.log("Volume changed, updating state", result);
+      } else {
+        console.log(
+          "Volume changed, but not for type music, not updating state",
+          result
+        );
+      }
+    });
+
+    const silentListener = VolumeManager.addSilentListener((status) => {
+      console.log(status);
+      setIsMuted(status.isMuted);
+      setInitialQuery(status.initialQuery);
+    });
+
+    const ringerListener = VolumeManager.addRingerListener((result) => {
+      console.log("Ringer listener changed", result);
+      setRingerStatus(result);
+    });
+
+    return () => {
+      volumeListener.remove();
+      silentListener.remove();
+      VolumeManager.removeRingerListener(ringerListener);
+    };
+  }, []);
 
   const handleToggleMusic = useCallback(async () => {
     await fetch(houseControlNextUrl + "/api/music/sonos/toggleRoom", {
@@ -121,6 +198,11 @@ export default function HomeScreen() {
       >
         <PlayPauseIcon isPlaying={isPlaying} />
       </Pressable>
+
+      <VolumeController
+        volume={volume}
+        handleVolumeChange={handleVolumeChange}
+      />
     </ParallaxScrollView>
   );
 }
