@@ -14,14 +14,16 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 const HEADER_HEIGHT = 250;
 
 type Props = PropsWithChildren<{
-  headerImage: ReactElement;
+  headerImage?: ReactElement;
   headerBackgroundColor: { dark: string; light: string };
+  headerHeight?: number;
 }>;
 
 export default function ParallaxScrollView({
   children,
   headerImage,
   headerBackgroundColor,
+  headerHeight = 40,
 }: Props) {
   const colorScheme = useColorScheme() ?? "light";
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
@@ -59,11 +61,14 @@ export default function ParallaxScrollView({
         <Animated.View
           style={[
             styles.header,
-            { backgroundColor: headerBackgroundColor[colorScheme] },
+            {
+              height: headerHeight,
+              backgroundColor: headerBackgroundColor[colorScheme],
+            },
             headerAnimatedStyle,
           ]}
         >
-          {headerImage}
+          {headerImage && headerImage}
         </Animated.View>
         <ThemedView style={styles.content}>{children}</ThemedView>
       </Animated.ScrollView>
@@ -74,14 +79,15 @@ export default function ParallaxScrollView({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    display: "flex",
+    height: "100%",
+    backgroundColor: "grey",
   },
   header: {
-    height: 30,
     overflow: "hidden",
   },
   content: {
     flex: 1,
-    // gap: 16,
     overflow: "hidden",
   },
 });

@@ -1,5 +1,4 @@
-import { View, Text } from "react-native";
-// import { useState } from "react";
+import { View, Text, StyleSheet } from "react-native";
 import Slider from "@react-native-community/slider";
 
 const VolumeController = ({
@@ -11,12 +10,12 @@ const VolumeController = ({
 }) => {
   return (
     <View>
-      <Text>Volume Controller Component: {volume}</Text>
+      <Text style={styles.volumeText}>{volume.toFixed(0)}</Text>
       <Slider
-        style={{ height: 50 }}
+        style={styles.slider}
         minimumValue={0}
         maximumValue={100}
-        minimumTrackTintColor="#FFFFFF"
+        minimumTrackTintColor="#ff0000"
         maximumTrackTintColor="#000000"
         onSlidingComplete={handleVolumeChange}
         value={volume}
@@ -24,5 +23,16 @@ const VolumeController = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  volumeText: {
+    paddingTop: 8,
+    textAlign: "center",
+  },
+  slider: {
+    height: 40,
+    paddingBottom: 8,
+  },
+});
 
 export default VolumeController;
