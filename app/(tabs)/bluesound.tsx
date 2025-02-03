@@ -15,9 +15,7 @@ export default function BluesoundPage() {
   const [error, setError] = useState<string | null>(null);
 
   const getStatus = useCallback(async () => {
-    const response = await fetch(fetchUrl("api/music/bluesound/getStatus"), {
-      method: "POST",
-    });
+    const response = await fetch(fetchUrl("api/music/bluesound/getStatus"));
     const responseJson = await response.json();
 
     const {
@@ -59,6 +57,10 @@ export default function BluesoundPage() {
     }
   };
 
+  const updateStatus = useCallback((status: boolean) => {
+    setIsPlaying(status);
+  }, []);
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
@@ -80,7 +82,7 @@ export default function BluesoundPage() {
         handleVolumeChange={handleVolumeChange}
       /> */}
 
-      <BluesoundFavorites getStatus={getStatus} />
+      <BluesoundFavorites updateStatus={updateStatus} />
     </ParallaxScrollView>
   );
 }

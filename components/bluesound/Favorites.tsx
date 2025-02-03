@@ -9,7 +9,12 @@ type Favorite = {
   id: string;
 };
 
-const Favorites = ({ getStatus }: { getStatus: () => Promise<void> }) => {
+const Favorites = ({
+  updateStatus,
+}: {
+  updateStatus: (newStatus: boolean) => void;
+}) => {
+  const [selectedFavoriteId, setSelectedFavoriteId] = useState("");
   const [favorites, setFavorites] = useState([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +38,8 @@ const Favorites = ({ getStatus }: { getStatus: () => Promise<void> }) => {
   const handlePlayFavorite = async (favoriteId: string) => {
     try {
       setError(null);
+      setSelectedFavoriteId(favoriteId);
+
       const response = await fetch(
         fetchUrl("api/music/bluesound/playFavorite"),
         {
@@ -48,7 +55,7 @@ const Favorites = ({ getStatus }: { getStatus: () => Promise<void> }) => {
 
       const data = await response.json();
 
-      await getStatus();
+      updateStatus(data.data.state === "stream");
 
       if (!data.success) {
         throw new Error(data.error || "Failed to play favorite");
@@ -69,7 +76,10 @@ const Favorites = ({ getStatus }: { getStatus: () => Promise<void> }) => {
               style={({ pressed }) => [
                 styles.button,
                 {
-                  backgroundColor: pressed ? "orange" : "green",
+                  backgroundColor:
+                    pressed || favorite.id === selectedFavoriteId
+                      ? "orange"
+                      : "green",
                 },
               ]}
             >
