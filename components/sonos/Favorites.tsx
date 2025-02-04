@@ -1,7 +1,7 @@
-import { Fragment, useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { fetchUrl } from "@/constants/Urls";
 import type { Room } from "@/constants/Types";
+import { fetchUrl } from "@/constants/Urls";
+import { useCallback, useEffect, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 interface Favorite {
   url: string;
@@ -9,6 +9,7 @@ interface Favorite {
 }
 
 const Favorites = ({ room }: { room: Room }) => {
+  const [selectedFavoriteIndex, setSelectedFavoriteIndex] = useState<number>();
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,53 +36,65 @@ const Favorites = ({ room }: { room: Room }) => {
     getFavorites();
   }, []);
 
-  const handlePlayFavorite = async (favorite: {
-    url: string;
-    title: string;
-  }) => {
-    try {
-      setError(null);
-      const response = await fetch(fetchUrl("api/music/sonos/playFavorite"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          favorite,
-          room,
-        }),
-      });
+  const handlePlayFavorite = useCallback(
+    async (
+      favorite: {
+        url: string;
+        title: string;
+      },
+      index: number
+    ) => {
+      setSelectedFavoriteIndex(index);
+      try {
+        setError(null);
+        const response = await fetch(fetchUrl("api/music/sonos/playFavorite"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            favorite,
+            room,
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!data.success) {
-        throw new Error(data.error || "Failed to play favorite");
+        if (!data.success) {
+          throw new Error(data.error || "Failed to play favorite");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong");
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    }
-  };
+    },
+    [room]
+  );
+
+  console.log({ selectedFavoriteIndex });
 
   return (
     <View style={styles.container}>
       <View style={styles.buttonContainer}>
         {favorites?.length > 0 ? (
-          favorites.map((favorite, index) => (
-            <Fragment>
+          favorites.map((favorite, index) => {
+            return (
               <Pressable
-                key={`${favorite.url}-${index}`}
-                onPress={() => handlePlayFavorite(favorite)}
+                key={`favorite-sonos-${index}`}
+                onPress={() => handlePlayFavorite(favorite, index)}
                 style={({ pressed }) => [
                   styles.button,
                   {
-                    backgroundColor: pressed ? "orange" : "green",
+                    backgroundColor:
+                      pressed || selectedFavoriteIndex === index
+                        ? "orange"
+                        : "green",
                   },
                 ]}
               >
                 <Text>{favorite.title}</Text>
               </Pressable>
-            </Fragment>
-          ))
+            );
+          })
         ) : (
           <Text>No favorites found</Text>
         )}
