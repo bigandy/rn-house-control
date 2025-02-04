@@ -24,8 +24,6 @@ export default function BluesoundPage() {
       data: { isPlaying, volume },
     } = responseJson;
 
-    // console.log({ isPlaying });
-
     setVolume(volume);
 
     setIsPlaying(isPlaying);

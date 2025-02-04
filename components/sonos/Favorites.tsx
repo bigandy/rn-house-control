@@ -70,8 +70,6 @@ const Favorites = ({ room }: { room: Room }) => {
     [room]
   );
 
-  console.log({ selectedFavoriteIndex });
-
   return (
     <View style={styles.container}>
       <View style={styles.buttonContainer}>
