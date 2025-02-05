@@ -1,12 +1,13 @@
-import { fetchUrl } from "@/constants/Urls";
+import { bluesoundApi } from "@/constants/Urls";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-type Favorite = {
-  url: string;
-  name: string;
-  image: string;
+import Favorite from "@/components/Favorite";
+
+type TFavorite = {
   id: string;
+  url: string;
+  title: string;
 };
 
 const Favorites = ({
@@ -14,15 +15,13 @@ const Favorites = ({
 }: {
   updateStatus: (newStatus: boolean) => void;
 }) => {
-  const [selectedFavoriteId, setSelectedFavoriteId] = useState("");
-  const [favorites, setFavorites] = useState([]);
+  const [selectedFavoriteIndex, setSelectedFavoriteIndex] = useState<number>();
+  const [favorites, setFavorites] = useState<TFavorite[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const getFavorites = async () => {
-      const response = await fetch(
-        fetchUrl("api/music/bluesound/getFavorites")
-      );
+      const response = await bluesoundApi("getFavorites");
       const responseJson = await response.json();
 
       const {
@@ -35,23 +34,22 @@ const Favorites = ({
     getFavorites();
   }, []);
 
-  const handlePlayFavorite = async (favoriteId: string) => {
+  const handlePlayFavorite = async (index: number) => {
     try {
       setError(null);
-      setSelectedFavoriteId(favoriteId);
+      setSelectedFavoriteIndex(index);
 
-      const response = await fetch(
-        fetchUrl("api/music/bluesound/playFavorite"),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: favoriteId,
-          }),
-        }
-      );
+      const id = favorites[index].id!;
+
+      const response = await bluesoundApi("playFavorite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+        }),
+      });
 
       const data = await response.json();
 
@@ -69,22 +67,14 @@ const Favorites = ({
     <View style={styles.container}>
       <View style={styles.buttonContainer}>
         {favorites.length > 0 ? (
-          favorites.map((favorite: Favorite) => (
-            <Pressable
+          favorites.map((favorite: TFavorite, index: number) => (
+            <Favorite
               key={favorite.url}
-              onPress={() => handlePlayFavorite(favorite.id)}
-              style={({ pressed }) => [
-                styles.button,
-                {
-                  backgroundColor:
-                    pressed || favorite.id === selectedFavoriteId
-                      ? "orange"
-                      : "green",
-                },
-              ]}
-            >
-              <Text>{favorite.name}</Text>
-            </Pressable>
+              handlePlayFavorite={handlePlayFavorite}
+              favorite={favorite}
+              index={index}
+              selected={selectedFavoriteIndex === index}
+            />
           ))
         ) : (
           <Text>No favorites found</Text>
@@ -98,39 +88,12 @@ const Favorites = ({
 const styles = StyleSheet.create({
   container: {
     display: "flex",
-    // flexDirection: "column",
-    // gap: 8,
-    // flexGrow: 1,
-    // backgroundColor: "purple",
     height: "100%",
-  },
-  playPauseWrapper: {
-    alignItems: "center",
   },
   buttonContainer: {
     flex: 1,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
-  },
-  button: {
-    width: "47%",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "orange",
-    padding: 20,
-  },
-  buttonText: {
-    fontSize: 30,
-    fontWeight: "bold",
-  },
-  titleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
   },
 });
 

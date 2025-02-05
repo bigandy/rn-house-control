@@ -1,21 +1,18 @@
 import type { Room } from "@/constants/Types";
-import { fetchUrl } from "@/constants/Urls";
+import { sonosApi } from "@/constants/Urls";
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-interface Favorite {
-  url: string;
-  title: string;
-}
+import Favorite, { type Favorite as TFavorite } from "@/components/Favorite";
 
 const Favorites = ({ room }: { room: Room }) => {
   const [selectedFavoriteIndex, setSelectedFavoriteIndex] = useState<number>();
-  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [favorites, setFavorites] = useState<TFavorite[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const getFavorites = async () => {
-      const response = await fetch(fetchUrl("api/music/sonos/getFavorites"));
+      const response = await sonosApi("getFavorites");
       const responseJson = await response.json();
 
       const {
@@ -24,7 +21,7 @@ const Favorites = ({ room }: { room: Room }) => {
 
       const newFavorites = formattedFavorites
         .filter(({ title }: { title: string }) => title !== "Xmas In Frisko")
-        .map((favorite: Favorite) => {
+        .map((favorite: TFavorite) => {
           return {
             ...favorite,
           };
@@ -37,17 +34,15 @@ const Favorites = ({ room }: { room: Room }) => {
   }, []);
 
   const handlePlayFavorite = useCallback(
-    async (
-      favorite: {
-        url: string;
-        title: string;
-      },
-      index: number
-    ) => {
+    async (index: number) => {
       setSelectedFavoriteIndex(index);
+
+      // find the favorite
+      const favorite = favorites[index];
+
       try {
         setError(null);
-        const response = await fetch(fetchUrl("api/music/sonos/playFavorite"), {
+        const response = await sonosApi("playFavorite", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -76,21 +71,13 @@ const Favorites = ({ room }: { room: Room }) => {
         {favorites?.length > 0 ? (
           favorites.map((favorite, index) => {
             return (
-              <Pressable
-                key={`favorite-sonos-${index}`}
-                onPress={() => handlePlayFavorite(favorite, index)}
-                style={({ pressed }) => [
-                  styles.button,
-                  {
-                    backgroundColor:
-                      pressed || selectedFavoriteIndex === index
-                        ? "orange"
-                        : "green",
-                  },
-                ]}
-              >
-                <Text>{favorite.title}</Text>
-              </Pressable>
+              <Favorite
+                favorite={favorite}
+                handlePlayFavorite={handlePlayFavorite}
+                index={index}
+                key={`favorite-${index}`}
+                selected={selectedFavoriteIndex === index}
+              />
             );
           })
         ) : (
@@ -105,37 +92,12 @@ const Favorites = ({ room }: { room: Room }) => {
 const styles = StyleSheet.create({
   container: {
     display: "flex",
-    // backgroundColor: "purple",
     height: "100%",
-  },
-  playPauseWrapper: {
-    alignItems: "center",
   },
   buttonContainer: {
     flex: 1,
     flexDirection: "row",
     flexWrap: "wrap",
-  },
-  button: {
-    width: "47%",
-    marginBottom: 10,
-    marginRight: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "orange",
-    padding: 20,
-  },
-  buttonText: {
-    fontSize: 30,
-    fontWeight: "bold",
-  },
-  titleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
   },
 });
 
