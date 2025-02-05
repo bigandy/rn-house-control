@@ -1,12 +1,12 @@
 import { Text } from "react-native";
 
-import ParallaxScrollView from "@/components/ParallaxScrollView";
 import BluesoundFavorites from "@/components/bluesound/Favorites";
 import LoadingIndicator from "@/components/LoadingIndicator";
 import PlayPauseButton from "@/components/PlayPauseButton";
 import VolumeController from "@/components/VolumeController";
-import { bluesoundApi } from "@/constants/Urls";
+import { bluesoundApi, bluesoundPostApi } from "@/constants/Urls";
 import { useCallback, useEffect, useState } from "react";
+import DefaultLayout from "@/layouts/DefaultLayout";
 
 export default function BluesoundPage() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -67,14 +67,8 @@ export default function BluesoundPage() {
 
     try {
       setError(null);
-      const response = await bluesoundApi("setVolume", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          volume,
-        }),
+      const response = await bluesoundPostApi("setVolume", {
+        volume,
       });
 
       const data = await response.json();
@@ -88,10 +82,8 @@ export default function BluesoundPage() {
   };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
-    >
-      <LoadingIndicator isLoading={isLoading} />
+    <DefaultLayout title="Bluesound">
+      {isLoading && <LoadingIndicator />}
       {error && <Text>{error}</Text>}
 
       <PlayPauseButton
@@ -105,6 +97,6 @@ export default function BluesoundPage() {
       />
 
       <BluesoundFavorites updateStatus={updateStatus} />
-    </ParallaxScrollView>
+    </DefaultLayout>
   );
 }

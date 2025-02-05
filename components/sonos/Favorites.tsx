@@ -1,5 +1,5 @@
 import type { Room } from "@/constants/Types";
-import { sonosApi } from "@/constants/Urls";
+import { sonosApi, sonosPostApi } from "@/constants/Urls";
 import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -42,15 +42,9 @@ const Favorites = ({ room }: { room: Room }) => {
 
       try {
         setError(null);
-        const response = await sonosApi("playFavorite", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            favorite,
-            room,
-          }),
+        const response = await sonosPostApi("playFavorite", {
+          favorite,
+          room,
         });
 
         const data = await response.json();

@@ -1,15 +1,16 @@
-import { Platform, StyleSheet } from "react-native";
+import { Platform } from "react-native";
+
 import { VolumeManager } from "react-native-volume-manager";
 
-import ParallaxScrollView from "@/components/ParallaxScrollView";
 import SonosFavorites from "@/components/sonos/Favorites";
 import VolumeController from "@/components/VolumeController";
 import type { Room } from "@/constants/Types";
-import { sonosApi } from "@/constants/Urls";
+import { sonosApi, sonosPostApi } from "@/constants/Urls";
 import { useCallback, useEffect, useState } from "react";
 
 import PlayPauseButton from "@/components/PlayPauseButton";
 import SonosRoomSelector from "@/components/sonos/RoomSelector";
+import DefaultLayout from "@/layouts/DefaultLayout";
 
 const nonActiveState = ["paused", "stopped"];
 
@@ -34,15 +35,9 @@ export default function HomeScreen() {
 
   const handleVolumeChange = useCallback(
     async (newVolume: number) => {
-      await sonosApi("setVolume", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          room: selectedRoom,
-          volume: newVolume,
-        }),
+      await sonosPostApi("setVolume", {
+        room: selectedRoom,
+        volume: newVolume,
       });
 
       setVolume(newVolume);
@@ -84,23 +79,15 @@ export default function HomeScreen() {
   }, []);
 
   const handleToggleMusic = useCallback(async () => {
-    await sonosApi("toggleRoom", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        room: selectedRoom,
-      }),
+    await sonosPostApi("toggleRoom", {
+      room: selectedRoom,
     });
 
     await getStatus(selectedRoom);
   }, [selectedRoom]);
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-    >
+    <DefaultLayout title="Sonos">
       <SonosRoomSelector
         selectedRoom={selectedRoom}
         setSelectedRoom={setSelectedRoom}
@@ -117,6 +104,6 @@ export default function HomeScreen() {
       />
 
       <SonosFavorites room={selectedRoom} />
-    </ParallaxScrollView>
+    </DefaultLayout>
   );
 }

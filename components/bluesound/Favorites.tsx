@@ -1,4 +1,4 @@
-import { bluesoundApi } from "@/constants/Urls";
+import { bluesoundApi, bluesoundPostApi } from "@/constants/Urls";
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -41,14 +41,8 @@ const Favorites = ({
 
       const id = favorites[index].id!;
 
-      const response = await bluesoundApi("playFavorite", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id,
-        }),
+      const response = await bluesoundPostApi("playFavorite", {
+        id,
       });
 
       const data = await response.json();

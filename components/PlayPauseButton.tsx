@@ -14,7 +14,7 @@ const PlayPauseButton = ({
       style={({ pressed }) => [
         styles.playPauseWrapper,
         {
-          backgroundColor: pressed ? "orange" : "red",
+          opacity: pressed ? 0.75 : 1,
         },
       ]}
       onPress={handleToggleMusic}
@@ -27,6 +27,12 @@ const PlayPauseButton = ({
 const styles = StyleSheet.create({
   playPauseWrapper: {
     alignItems: "center",
+    backgroundColor: "orange",
+    // borderRadius: 50,
+    // borderRadius: "100%",
+    // borderWidth: 3,
+    // borderColor: "black",
+    // padding: 10,
   },
 });
 
